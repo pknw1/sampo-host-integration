@@ -3,6 +3,9 @@ kind: Service
 apiVersion: v1
 metadata:
   name: sampo
+  labels:
+    app: sampo
+  namespace: sampo
 spec:
   selector:
     app: sampo

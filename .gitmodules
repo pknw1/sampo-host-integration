@@ -1,12 +1,12 @@
 [submodule "bats-core"]
-	path = test/bats-core
+	path = test/test_helper/bats-core
 	url = https://github.com/bats-core/bats-core.git
 [submodule "bats-file"]
-	path = test/bats-file
+	path = test/test_helper/bats-file
 	url = https://github.com/bats-core/bats-file.git
 [submodule "bats-assert"]
-	path = test/bats-assert
+	path = test/test_helper/bats-assert
 	url = https://github.com/bats-core/bats-assert.git
 [submodule "bats-support"]
-	path = test/bats-support
+	path = test/test_helper/bats-support
 	url = https://github.com/bats-core/bats-support.git

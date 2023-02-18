@@ -17,28 +17,30 @@ Content-Type: text/plain
 rusty-fork
 ```
 
+# Running Locally With `socat`
+
+```bash
+./build.sh -l
+```
+
+# Running in Docker
+
+```bash
+./build.sh -d
+```
+
+# Running in Kubernetes
+
+```bash
+./build.sh -k
+```
+
 # How It Works
 
-The `sampo` Kubernetes Deployment runs a `sampo` container, which is running a shell script that processes your API calls.  Each endpoint can call any arbitrary shell code.
-
-You can run `sampo` directly in your shell, but it works best in Kubernetes.
+- `sampo.sh` listens for incoming requests
+- `sampo.conf` is configured to user-defined endpoint that run user-defined shell scripts
+- `scripts/` contains all of the user-defined scripts
 
 # Details
 
 Details can be found on [this blog post](https://jacobsalmela.com/2020/09/15/introducing-sampo-a-bash-api-server-that-runs-your-shell-scripts/).
-
-# Developing/testing
-
-If you want to test this out yourself, you can.  I run it on Kubernetes in Docker for Mac, but the instructions should basically be the same:
-```
-git clone https://github.com/jacobsalmela/sampo.git
-cd sampo/
-kubectl create -f sampo/
-```
-
-## Testing changes
-I use a simple build script to delete my current deployment, re-deploy it, and set up port forwarding (this all assumes local development on Docker for Mac).  Then I just run:
-```
-./build.sh
-```
-I currently use [`bats-core`](https://github.com/bats-core/bats-core) in the script.  It doesn't work all that well, but it's a nice indicator if something is immediately wrong.

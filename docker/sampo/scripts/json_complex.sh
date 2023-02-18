@@ -5,7 +5,7 @@ set -o pipefail
 
 # this is the dir to list, from which the JSON payload will be crafted
 # it will create a list of dictionaries with all the information 'ls' provides
-dir_to_list="/tmp"
+dir_to_list="/etc"
 # print a long listing, supressing the 'total: <size>' line
 cmd_string="ls -ldh $dir_to_list/*"
 # run the command string in a subshell and save it's output to a variable
