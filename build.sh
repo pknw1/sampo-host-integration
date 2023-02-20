@@ -24,10 +24,6 @@ test_title() {
   echo "$test$fill"
 }
 
-# SCREEN_REGEX="[0-9]*\.$APP"
-# Cleanup from last run
-# Remove any screen sessions
-# for session in $(screen -ls | grep -o \'$SCREEN_REGEX\'); do screen -S "${session}" -X quit; done >/dev/null
 # Kill any port-forwarding processes
 for p in $(ps aux | grep port-forward | grep -v grep | awk '{print $2}'); do kill -9 $p; done
 # Delete the old deployment
@@ -51,22 +47,15 @@ do
   echo "Terminiating.."
 done
 # Get the pod name in a variable
-# POD=$(kubectl get pod -l app=$APP --field-selector=status.phase==Running -o jsonpath="{.items[0].metadata.name}")
 POD=$(kubectl get pods -l app=$APP -o=go-template --template='{{range .items}}{{$ready:=true}}{{range .status.containerStatuses}}{{if not .ready}}{{$ready = false}}{{end}}{{end}}{{if $ready}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}')
-# DEPLOYMENT=$(kubectl get deployment -l app=$APP -o=go-template --template='{{range .items}}{{$ready:=true}}{{range .status.containerStatuses}}{{if not .ready}}{{$ready = false}}{{end}}{{end}}{{if $ready}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}')
-# echo "Enabling port forwarding for $DEPLOYMENT..."
 echo "Enabling port forwarding for $POD..."
 # Set up local port forwarding in a screen for that pod
-# screen -d -S $APP -m kubectl port-forward $POD $PORT:$PORT
 kubectl port-forward --address 0.0.0.0 "$POD" $PORT:$PORT >/dev/null &
-# kubectl port-forward --address 0.0.0.0 deployment/"$DEPLOYMENT" :$PORT >/dev/null &
-# ps aux | grep port-forward | grep -v grep
-
 echo "Running unit tests..."
 # BATS doesn't always work, but it's a nice quick inidicator if things are decent while developing this.
-sleep 3
+sleep 5
 # Unit Tests
 # test_title "[TEST]: Verify 'echo' endpoint returns <value>"
-bats --tap "$DIR/test/$APP.bats"
+test/bats-core/bin/bats --tap "$DIR/test/$APP.bats"
 
 # while true; do { echo -e 'HTTP/1.1 200 OK\r\n'; bash ./sampo.sh; } | nc -l 1500; done
