@@ -282,14 +282,24 @@ match_uri() {
   # shift to the next parameter
   shift
 
-  # if [[ $SAMPO_DEBUG == true ]]; then
-  #   loggy "Matching $REQUEST_URI against $regex"
-  # fi
+  if [[ ${SAMPO_DEBUG:=false} == true ]]; then
+    debuggy "Matching '$REQUEST_URI' against '$regex' for commands: $* <rematches...> <non-matches...>"
+  fi
 
   # if the REQUEST_URI matches the regex passed in as the first argument,
   if [[ $REQUEST_URI =~ $regex ]]; then
     # the matched part of the REQUEST_URI above is stored in the BASH_REMATCH array
-    "$@" "${BASH_REMATCH[@]}"
+    # the unmatched part may comprise path and query parameters: pass them on, too
+    local unmatched="${REQUEST_URI#${BASH_REMATCH[0]}}"
+    unmatched="${unmatched#/}"
+    if [[ ${SAMPO_DEBUG:=false} == true ]]; then
+      debuggy "Matched '${BASH_REMATCH[0]}' with rematches '${BASH_REMATCH[*]:1}' and unmatched '$unmatched'"
+    fi
+    if [ -n "$unmatched" ]; then
+      "$@" "${BASH_REMATCH[@]}" "$unmatched"
+    else
+      "$@" "${BASH_REMATCH[@]}"
+    fi
   fi
 }
 
