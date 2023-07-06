@@ -386,10 +386,32 @@ endpoint_exists() {
 # this is arguably the best feature of sampo, as it allows unlimited extensibility
 run_external_script() {
   script_to_run="$1"
-  if [[ "${SAMPO_DEBUG:=false}" == "true" ]]; then
-    debuggy "[$(basename "${BASH_SOURCE[0]}"):${LINENO}:${FUNCNAME[*]:0:${#FUNCNAME[@]}-1}()] running external script: $script_to_run"
+  endpoint="$2"
+  shift 2
+  args=( "$@" )
+  # check last arg
+  if [[ "${args[@]:(-1)}" =~ [?] ]]; then
+    # convert CGI query parameters to GNU-style CLI options
+    # reverse order (--opts then args instead of args?opts)
+    cgi="${args[@]:(-1)}"
+    args=( "${args[@]:0:${#args[@]}-1}" )
+    cgipath="${cgi%%[?]*}"
+    args=( "$cgipath" "${args[@]}" )
+    IFS=$'&' cgiopts=( ${cgi#$cgipath[?]} )
+    IFS=$' \t\n'
+    for opt in "${cgiopts[@]}"; do
+      key="${opt%%=*}"
+      val="${opt#*=}"
+      if [ -n "$val" ]; then
+        args=( "$val" "${args[@]}" )
+      fi
+      args=( --$key "${args[@]}" )
+    done
   fi
-  send_response 200 < <(bash "${script_to_run}")
+  if [[ "${SAMPO_DEBUG:=false}" == "true" ]]; then
+    debuggy "[$(basename "${BASH_SOURCE[0]}"):${LINENO}:${FUNCNAME[*]:0:${#FUNCNAME[@]}-1}()] running external script: $script_to_run ${args[*]}"
+  fi
+  send_response 200 < <(bash "${script_to_run}" "${args[@]}")
 }
 
 
