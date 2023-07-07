@@ -497,11 +497,11 @@ if [[ "$(basename "${0}")" == "sampo.sh" ]]; then
   # trap on error and print the line number and command
   trap 'die ${LINENO} "$BASH_COMMAND"' ERR
 
+  container_check
+
   if [[ "${SAMPO_DEBUG:=false}" == "true" ]]; then
     debuggy "\$SAMPO_DEBUG is set to true.  This will cause a lot of output."
   fi
-
-  container_check
 
   listen_for_requests
   # import the config file
