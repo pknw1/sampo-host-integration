@@ -412,7 +412,9 @@ run_external_script() {
   if [[ "${SAMPO_DEBUG:=false}" == "true" ]]; then
     debuggy "[$(basename "${BASH_SOURCE[0]}"):${LINENO}:${FUNCNAME[*]:0:${#FUNCNAME[@]}-1}()] running external script: $script_to_run ${args[*]}"
   fi
-  send_response 200 < <(bash "${script_to_run}" "${args[@]}")
+  retval=200
+  result="$(bash "${script_to_run}" "${args[@]}" 2>&1)" || retval=500
+  send_response $retval <<< "$result"
 }
 
 
