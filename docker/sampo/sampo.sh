@@ -413,7 +413,7 @@ run_external_script() {
     debuggy "[$(basename "${BASH_SOURCE[0]}"):${LINENO}:${FUNCNAME[*]:0:${#FUNCNAME[@]}-1}()] running external script: $script_to_run ${args[*]}"
   fi
   retval=200
-  result="$(bash "${script_to_run}" "${args[@]}" 2>&1)" || retval=500
+  result="$("${script_to_run}" "${args[@]}" 2>&1)" || retval=500
   send_response $retval <<< "$result"
 }
 
