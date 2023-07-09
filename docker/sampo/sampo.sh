@@ -148,8 +148,9 @@ container_check() {
 die() {
   local lineno="${1}"
   local msg="${2}"
+  local retval=$3
   echo "**         **"
-  echo "** FAILURE ** ${0} at line $lineno: $msg"
+  echo "** FAILURE ** ${0} ($retval) at line $lineno: $msg"
   echo "**         **"
 }
 
@@ -495,7 +496,7 @@ if [[ "$(basename "${0}")" == "sampo.sh" ]]; then
   # Run cleanup function in interrupt
   trap cleanup SIGINT
   # trap on error and print the line number and command
-  trap 'die ${LINENO} "$BASH_COMMAND"' ERR
+  trap 'die ${BASH_SOURCE[0]}:${LINENO}:${FUNCNAME} "$BASH_COMMAND" $?' ERR
 
   container_check
 
