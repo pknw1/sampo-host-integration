@@ -148,8 +148,9 @@ container_check() {
 die() {
   local lineno="${1}"
   local msg="${2}"
+  local retval=$3
   echo "**         **"
-  echo "** FAILURE ** ${0} at line $lineno: $msg"
+  echo "** FAILURE ** ${0} ($retval) at line $lineno: $msg"
   echo "**         **"
 }
 
@@ -282,14 +283,24 @@ match_uri() {
   # shift to the next parameter
   shift
 
-  # if [[ $SAMPO_DEBUG == true ]]; then
-  #   loggy "Matching $REQUEST_URI against $regex"
-  # fi
+  if [[ ${SAMPO_DEBUG:=false} == true ]]; then
+    debuggy "Matching '$REQUEST_URI' against '$regex' for commands: $* <rematches...> <non-matches...>"
+  fi
 
   # if the REQUEST_URI matches the regex passed in as the first argument,
   if [[ $REQUEST_URI =~ $regex ]]; then
     # the matched part of the REQUEST_URI above is stored in the BASH_REMATCH array
-    "$@" "${BASH_REMATCH[@]}"
+    # the unmatched part may comprise path and query parameters: pass them on, too
+    local unmatched="${REQUEST_URI#${BASH_REMATCH[0]}}"
+    unmatched="${unmatched#/}"
+    if [[ ${SAMPO_DEBUG:=false} == true ]]; then
+      debuggy "Matched '${BASH_REMATCH[0]}' with rematches '${BASH_REMATCH[*]:1}' and unmatched '$unmatched'"
+    fi
+    if [ -n "$unmatched" ]; then
+      "$@" "${BASH_REMATCH[@]}" "$unmatched"
+    else
+      "$@" "${BASH_REMATCH[@]}"
+    fi
   fi
 }
 
@@ -376,10 +387,34 @@ endpoint_exists() {
 # this is arguably the best feature of sampo, as it allows unlimited extensibility
 run_external_script() {
   script_to_run="$1"
-  if [[ "${SAMPO_DEBUG:=false}" == "true" ]]; then
-    debuggy "[$(basename "${BASH_SOURCE[0]}"):${LINENO}:${FUNCNAME[*]:0:${#FUNCNAME[@]}-1}()] running external script: $script_to_run"
+  endpoint="$2"
+  shift 2
+  args=( "$@" )
+  # check last arg
+  if [[ "${args[@]:(-1)}" =~ [?] ]]; then
+    # convert CGI query parameters to GNU-style CLI options
+    # reverse order (--opts then args instead of args?opts)
+    cgi="${args[@]:(-1)}"
+    args=( "${args[@]:0:${#args[@]}-1}" )
+    cgipath="${cgi%%[?]*}"
+    args=( "$cgipath" "${args[@]}" )
+    IFS=$'&' cgiopts=( ${cgi#$cgipath[?]} )
+    IFS=$' \t\n'
+    for opt in "${cgiopts[@]}"; do
+      key="${opt%%=*}"
+      val="${opt#*=}"
+      if [ -n "$val" ]; then
+        args=( "$val" "${args[@]}" )
+      fi
+      args=( --$key "${args[@]}" )
+    done
   fi
-  send_response 200 < <(bash "${script_to_run}")
+  if [[ "${SAMPO_DEBUG:=false}" == "true" ]]; then
+    debuggy "[$(basename "${BASH_SOURCE[0]}"):${LINENO}:${FUNCNAME[*]:0:${#FUNCNAME[@]}-1}()] running external script: $script_to_run ${args[*]}"
+  fi
+  retval=200
+  result="$("${script_to_run}" "${args[@]}" 2>&1)" || retval=500
+  send_response $retval <<< "$result"
 }
 
 
@@ -463,13 +498,13 @@ if [[ "$(basename "${0}")" == "sampo.sh" ]]; then
   # Run cleanup function in interrupt
   trap cleanup SIGINT
   # trap on error and print the line number and command
-  trap 'die ${LINENO} "$BASH_COMMAND"' ERR
+  trap 'die ${BASH_SOURCE[0]}:${LINENO}:${FUNCNAME} "$BASH_COMMAND" $?' ERR
+
+  container_check
 
   if [[ "${SAMPO_DEBUG:=false}" == "true" ]]; then
     debuggy "\$SAMPO_DEBUG is set to true.  This will cause a lot of output."
   fi
-
-  container_check
 
   listen_for_requests
   # import the config file
