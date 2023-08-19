@@ -5,11 +5,11 @@ on:
     types:
       - published
   workflow_dispatch:
-    
+
 
 env:
   REGISTRY: hub.docker.com
-  IMAGE_NAME: pknw1/sampo-host-integration
+  IMAGE_NAME: sampo-host-integration
 
 jobs:
   build_and_publish_container_image:
