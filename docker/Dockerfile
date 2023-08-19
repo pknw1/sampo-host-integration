@@ -2,7 +2,7 @@
 # This file is part of sampo
 FROM              bash:4.4
 LABEL             maintainer="Jacob Salmela <<me@jacobsalmela.com>"
-LABEL             org.opencontainers.image.source = "https://github.com/jacobsalmela/sampo"
+LABEL             org.opencontainers.image.source = "https://github.com/pknw1/sampo-host-integration"
 LABEL             app=${APP}
 ARG               SAMPO_PORT=1042
 ARG               APP=sampo
@@ -14,17 +14,18 @@ RUN               apk add --no-cache \
                     file \
                     netcat-openbsd \
                     openssh-client \
-                    socat
+                    socat \
+                    docker
 ENV               APP=${APP} \
                   DEBUG=false \
                   SAMPO_PORT=${SAMPO_PORT} \
                   SSH_AUTH_SOCK=/ssh-agent
 # Install sampo, the config, and the scripts/ directory
 COPY              ./${APP}/sampo.sh /${APP}/sampo.sh
-COPY              ./${APP}/sampo.conf /${APP}/sampo.conf
+COPY              ./${APP}/sampo.conf /config/sampo.conf
 COPY              ./${APP}/scripts /${APP}/scripts
 RUN               chmod 0755 /${APP}/${APP}.sh
-RUN               chmod 0644 /${APP}/${APP}.conf
+RUN               chmod 0644 /config/${APP}.conf
 
 # Run the sampo.sh script, and listen on the exposed port from above using socat
 # netcat is also included in case you want that (and is also useful for port checking between containers/pods)

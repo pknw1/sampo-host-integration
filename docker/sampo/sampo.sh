@@ -19,7 +19,6 @@ set -o pipefail
 # This variable is useful if we ever want to use the name of the app anywhere in the code
 readonly APP=sampo
 readonly VERSION=1.0.0
-readonly FUNDING="https://github.com/sponsors/jacobsalmela/"
 # Get the current date
 # For HTTP/1.1 it must be in the format defined in RFC 1123
 # Example: Tue, 01 Sep 2020 10:35:28 UTC
@@ -122,7 +121,7 @@ declare -a RESPONSE_CODE=(
 
 # Check the control groups of the init process, which vary depending on the OS vs. container
 readonly CONTAINER_CHECK="/proc/1/cgroup"
-readonly CONFIG="$DIR/$APP.conf"
+readonly CONFIG="/config/$APP.conf"
 
 # -------------------------------------------
 # Functions
